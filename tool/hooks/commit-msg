@@ -1,0 +1,11 @@
+#!/bin/sh
+
+# 讀取當前的版本號
+VERSION=$(cat version.txt)
+
+# 確保 version.txt 變更被提交
+git add version.txt
+
+# 在提交消息中添加版本號
+COMMIT_MSG_FILE=$1
+echo "Version: $NEW_VERSION" >> $COMMIT_MSG_FILE

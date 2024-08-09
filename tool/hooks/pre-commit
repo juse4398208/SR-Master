@@ -1,0 +1,8 @@
+#!/bin/sh
+
+# 读当前的版本号
+VERSION=$(cat version.txt)
+
+# 在提交消息中添加版本号
+COMMIT_MSG_FILE=$1
+echo "Version: $VERSION" >> $COMMIT_MSG_FILE
