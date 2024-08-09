@@ -3,6 +3,13 @@
 # 读当前的版本号
 VERSION=$(cat version.txt)
 
-# 在提交消息中添加版本号
-COMMIT_MSG_FILE=$1
-echo "Version: $VERSION" >> $COMMIT_MSG_FILE
+# 更新版本号（自增1）
+NEW_VERSION=$((VERSION + 1))
+
+# 将新版本号写回文件
+echo $NEW_VERSION > version.txt
+
+# 确保 version.txt 变更被提交
+git add version.txt
+
+# 继续提交过程
