@@ -1,0 +1,10 @@
+#!/bin/sh
+# post-merge hook script to install Git hooks
+
+echo "Running post-merge hook..."
+
+# 调用安装 hooks 的 PowerShell 脚本
+powershell.exe -ExecutionPolicy Bypass -File ./tool/install-hooks.ps1
+
+# 输出安装完成的信息
+echo "Hooks installed successfully."
