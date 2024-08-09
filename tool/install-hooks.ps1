@@ -31,4 +31,12 @@ Get-ChildItem -Path $sourceDir -File | ForEach-Object {
     Write-Host "Installed hook: $($_.Name)"
 }
 
+# 设置所有 hooks 脚本为可执行
+Get-ChildItem -Path $targetDir -File | ForEach-Object {
+    $file = $_.FullName
+    & icacls $file /grant Everyone:F | Out-Null
+    Write-Host "Set executable permission: $($_.Name)"
+}
+
+
 Write-Host "All hooks installed successfully."
