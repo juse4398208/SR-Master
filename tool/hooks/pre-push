@@ -1,23 +1,37 @@
 #!/bin/sh
+# pre-push hook script to install Git hooks
 
-# 獲取將要推送的遠端分支名稱
+echo "Running post-merge hook..."
+
+# 調用安装 hooks 的 PowerShell 腳本
+powershell.exe -ExecutionPolicy Bypass -File ./tool/install-hooks.ps1
+
+# 輸出安裝完成的信息
+echo "Hooks installed successfully."
+
+# 獲取即將推送的遠端分支名稱
 remote_branch=$(git rev-parse --abbrev-ref HEAD)
 
-# 僅當推送到 main 分支時執行版本號遞增
 if [ "$remote_branch" == "main" ]; then
     echo "Pushing to main branch, updating version number..."
 
-    # 讀取並遞增 version.txt 中的版本號
+    # 同步本地與遠端的 main 分支
+    git fetch origin main
+    git reset --soft origin/main
+
+    # 版本號遞增邏輯
     version_file="version.txt"
     current_version=$(cat $version_file)
     new_version=$((current_version + 1))
     echo $new_version > $version_file
 
-    # 添加 version.txt 到最後一次提交
     git add $version_file
-    git commit --amend --no-edit
+    git commit -m "Bump version to $new_version"
 
-    echo "Version updated to $new_version"
+    # 推送新版本號到遠端
+    git push origin main
+
+    echo "Version updated to $new_version and pushed to remote main."
 else
     echo "Pushing to $remote_branch branch, no version increment."
 fi

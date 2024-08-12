@@ -3,7 +3,7 @@
 
 echo "Running post-merge hook..."
 
-# 調用安裝 hooks 的 PowerShell 腳本
+# 調用安装 hooks 的 PowerShell 腳本
 powershell.exe -ExecutionPolicy Bypass -File ./tool/install-hooks.ps1
 
 # 輸出安裝完成的信息
