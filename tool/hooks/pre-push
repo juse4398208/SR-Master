@@ -1,18 +1,27 @@
 #!/bin/sh
-# pre-push hook script to install Git hooks
+# .git/hooks/pre-push
+
+# 設定日誌文件路徑
+log_file=".git/hooks/pre-push.log"
 
 # 獲取即將推送的遠端分支名稱
 remote_branch=$(git rev-parse --abbrev-ref HEAD)
 
+# 紀錄分支信息到日誌
+echo "Pushing to branch: $remote_branch" >> $log_file
+
 # 檢查當前提交是否為合併提交
 is_merge_commit=$(git log -1 --pretty=%P | wc -w)
-log_file="debug.log"
-echo "pre-push" > $log_file
+
+# 記錄合併檢查結果到日誌
+echo "Merge commit check result: $is_merge_commit" >> $log_file
+
 if [ "$remote_branch" == "main" ]; then
     if [ "$is_merge_commit" -eq 2 ]; then
-        echo "Merge commit detected, skipping version increment." > $log_file
+        echo "Merge commit detected, skipping version increment." >> $log_file
+        echo "Merge commit detected, skipping version increment."
     else
-        echo "Pushing to main branch, updating version number..." > $log_file
+        echo "Pushing to main branch, updating version number..." >> $log_file
 
         # 同步本地與遠端的 main 分支
         git fetch origin main
@@ -25,13 +34,13 @@ if [ "$remote_branch" == "main" ]; then
         echo $new_version > $version_file
 
         git add $version_file
-        git commit -m "Bump version to $new_version"
+        git commit -m "Bump version to $new_version" >> $log_file
 
         # 推送新版本號到遠端
         git push origin main
 
-        echo "Version updated to $new_version and pushed to remote main." > $log_file
+        echo "Version updated to $new_version and pushed to remote main." >> $log_file
     fi
 else
-    echo "Pushing to $remote_branch branch, no version increment." > $log_file
+    echo "Pushing to $remote_branch branch, no version increment." >> $log_file
 fi
