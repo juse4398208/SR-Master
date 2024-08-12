@@ -2,7 +2,7 @@
 # .git/hooks/pre-push
 
 # 設定日誌文件路徑
-log_file=".git/hooks/pre-push.log"
+log_file="pre-push.log"
 
 # 獲取即將推送的遠端分支名稱
 remote_branch=$(git rev-parse --abbrev-ref HEAD)
