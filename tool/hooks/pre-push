@@ -15,16 +15,18 @@ remote_branch=$(git rev-parse --abbrev-ref HEAD)
 # 仅当推送到 main 分支时执行版本号递增
 if [ "$remote_branch" == "main" ]; then
     echo "Pushing to main branch, updating version number..."
-    
+
     # 读取并递增 version.txt 中的版本号
     version_file="version.txt"
     current_version=$(cat $version_file)
     new_version=$((current_version + 1))
     echo $new_version > $version_file
 
-    # 添加 version.txt 到 commit
+    # 添加 version.txt 到最后一次提交
     git add $version_file
-    git commit -m "Version increment to $new_version"
+    git commit --amend --no-edit
+
+    echo "Version updated to $new_version"
 else
     echo "Pushing to $remote_branch branch, no version increment."
 fi
