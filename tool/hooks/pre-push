@@ -6,12 +6,13 @@ remote_branch=$(git rev-parse --abbrev-ref HEAD)
 
 # 檢查當前提交是否為合併提交
 is_merge_commit=$(git log -1 --pretty=%P | wc -w)
-
+log_file="debug.log"
+echo "pre-push" > $log_file
 if [ "$remote_branch" == "main" ]; then
     if [ "$is_merge_commit" -eq 2 ]; then
-        echo "Merge commit detected, skipping version increment."
+        echo "Merge commit detected, skipping version increment." > $log_file
     else
-        echo "Pushing to main branch, updating version number..."
+        echo "Pushing to main branch, updating version number..." > $log_file
 
         # 同步本地與遠端的 main 分支
         git fetch origin main
@@ -29,8 +30,8 @@ if [ "$remote_branch" == "main" ]; then
         # 推送新版本號到遠端
         git push origin main
 
-        echo "Version updated to $new_version and pushed to remote main."
+        echo "Version updated to $new_version and pushed to remote main." > $log_file
     fi
 else
-    echo "Pushing to $remote_branch branch, no version increment."
+    echo "Pushing to $remote_branch branch, no version increment." > $log_file
 fi
