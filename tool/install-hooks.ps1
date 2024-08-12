@@ -1,6 +1,6 @@
 # install-hooks.ps1
 
-# 检查是否在 Git 仓库根目录下
+# 檢查是否在 Git 倉庫根目錄下
 function Get-GitRoot {
     $currentDir = Get-Location
     while ($currentDir -ne $null) {
@@ -12,17 +12,17 @@ function Get-GitRoot {
     return $null
 }
 
-# 尝试获取 Git 根目录
+# 嘗試獲取 Git 根目錄
 $gitRoot = Get-GitRoot
 
-# 如果在 Git 仓库内运行，$gitRoot 会被设置
+# 如果在 Git 倉庫內運行，$gitRoot 會被設置
 if ($gitRoot -ne $null) {
     Set-Location -Path $gitRoot
     $targetDir = "$gitRoot/.git/hooks"
 	$sourceDir = "$gitRoot/tool/hooks"
 
 } else {
-    # 如果不在 Git 仓库中运行，则提示用户输入 Git 仓库目录
+    # 如果不在 Git 倉庫中運行，則提示用戶輸入 Git 倉庫目錄
 	
     $targetDir = "../.git/hooks"
 	$sourceDir = "../tool/hooks"
@@ -39,10 +39,13 @@ Write-Output "Installing hooks in: $targetDir"
 if (Test-Path $sourceDir) {
     Write-Output "Installing hooks from: $sourceDir"
 
-    # 复制 hooks 文件，使用 -Force 参数覆盖现有文件
+    # 清理目標目錄
+    Remove-Item -Path "$targetDir\*" -Recurse -Force -ErrorAction SilentlyContinue
+
+    # 複製 hooks 文件，使用 -Force 參數覆蓋現有文件
     Copy-Item -Path "$sourceDir\*" -Destination $targetDir -Recurse -Force
 
-    # 确保 hooks 可执行
+    # 確保 hooks 可執行
     Get-ChildItem -Path $targetDir -File | ForEach-Object {
         & icacls $_.FullName /grant Everyone:F | Out-Null
         Write-Output "Set executable permission: $($_.Name)"
