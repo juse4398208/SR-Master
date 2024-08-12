@@ -4,26 +4,33 @@
 # 獲取即將推送的遠端分支名稱
 remote_branch=$(git rev-parse --abbrev-ref HEAD)
 
+# 檢查當前提交是否為合併提交
+is_merge_commit=$(git log -1 --pretty=%P | wc -w)
+
 if [ "$remote_branch" == "main" ]; then
-    echo "Pushing to main branch, updating version number..."
+    if [ "$is_merge_commit" -eq 2 ]; then
+        echo "Merge commit detected, skipping version increment."
+    else
+        echo "Pushing to main branch, updating version number..."
 
-    # 同步本地與遠端的 main 分支
-    git fetch origin main
-    git reset --soft origin/main
+        # 同步本地與遠端的 main 分支
+        git fetch origin main
+        git reset --soft origin/main
 
-    # 版本號遞增邏輯
-    version_file="version.txt"
-    current_version=$(cat $version_file)
-    new_version=$((current_version + 1))
-    echo $new_version > $version_file
+        # 版本號遞增邏輯
+        version_file="version.txt"
+        current_version=$(cat $version_file)
+        new_version=$((current_version + 1))
+        echo $new_version > $version_file
 
-    git add $version_file
-    git commit -m "Bump version to $new_version"
+        git add $version_file
+        git commit -m "Bump version to $new_version"
 
-    # 推送新版本號到遠端
-    git push origin main
+        # 推送新版本號到遠端
+        git push origin main
 
-    echo "Version updated to $new_version and pushed to remote main."
+        echo "Version updated to $new_version and pushed to remote main."
+    fi
 else
     echo "Pushing to $remote_branch branch, no version increment."
 fi
