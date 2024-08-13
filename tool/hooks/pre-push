@@ -16,6 +16,10 @@ is_merge_commit=$(git log -1 --pretty=%P | wc -w)
 # 記錄合併檢查結果到日誌
 echo "Merge commit check result: $is_merge_commit" >> $log_file
 
+merge_parents=$(git log -1 --pretty=%P)
+echo "Parents of current commit: $merge_parents" >> $log_file
+
+
 if [ "$remote_branch" == "main" ]; then
     if [ "$is_merge_commit" -eq 2 ]; then
         echo "Merge commit detected, skipping version increment." >> $log_file
