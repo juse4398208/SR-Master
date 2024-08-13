@@ -2,49 +2,65 @@
 # .git/hooks/pre-push
 
 # 設定日誌文件路徑
-log_file="pre-push.log"
+log_file=".git/hooks/pre-push.log"
+
+# 清空之前的日誌內容
+> $log_file
 
 # 獲取即將推送的遠端分支名稱
 remote_branch=$(git rev-parse --abbrev-ref HEAD)
 
-# 紀錄分支信息到日誌
+# 記錄分支信息到日誌
 echo "Pushing to branch: $remote_branch" >> $log_file
 
 # 檢查當前提交是否為合併提交
 is_merge_commit=$(git log -1 --pretty=%P | wc -w)
-
-# 記錄合併檢查結果到日誌
-echo "Merge commit check result: $is_merge_commit" >> $log_file
-
 merge_parents=$(git log -1 --pretty=%P)
+
+echo "Merge commit check result: $is_merge_commit" >> $log_file
 echo "Parents of current commit: $merge_parents" >> $log_file
 
-
 if [ "$remote_branch" == "main" ]; then
+    echo "On main branch, proceeding with version check..." >> $log_file
     if [ "$is_merge_commit" -eq 2 ]; then
-        echo "Merge commit detected, skipping version increment." >> $log_file
-        echo "Merge commit detected, skipping version increment."
+        # 這裡新增對合併提交的額外判斷
+        if git log -1 --pretty=%B | grep -q 'Merge branch'; then
+            echo "Merge commit detected from branch, skipping version increment." >> $log_file
+        else
+            echo "Non-branch merge commit, incrementing version number..." >> $log_file
+            increment_version
+        fi
     else
-        echo "Pushing to main branch, updating version number..." >> $log_file
-
-        # 同步本地與遠端的 main 分支
-        git fetch origin main
-        git reset --soft origin/main
-
-        # 版本號遞增邏輯
-        version_file="version.txt"
-        current_version=$(cat $version_file)
-        new_version=$((current_version + 1))
-        echo $new_version > $version_file
-
-        git add $version_file
-        git commit -m "Bump version to $new_version" >> $log_file
-
-        # 推送新版本號到遠端
-        git push origin main
-
-        echo "Version updated to $new_version and pushed to remote main." >> $log_file
+        echo "No merge commit detected, incrementing version number..." >> $log_file
+        increment_version
     fi
 else
     echo "Pushing to $remote_branch branch, no version increment." >> $log_file
 fi
+
+increment_version() {
+    # 同步本地與遠端的 main 分支
+    git fetch origin main
+    git reset --soft origin/main
+    echo "Synced with remote main branch." >> $log_file
+
+    # 版本號遞增邏輯
+    version_file="version.txt"
+    if [ ! -f $version_file ]; then
+        echo "version.txt not found!" >> $log_file
+        exit 1
+    fi
+    
+    current_version=$(cat $version_file)
+    new_version=$((current_version + 1))
+    echo $new_version > $version_file
+
+    echo "Updated version to $new_version" >> $log_file
+
+    git add $version_file
+    git commit -m "Bump version to $new_version" >> $log_file
+
+    # 推送新版本號到遠端
+    git push origin main
+    echo "Version updated to $new_version and pushed to remote main." >> $log_file
+}
