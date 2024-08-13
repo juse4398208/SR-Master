@@ -7,37 +7,7 @@ log_file=".git/hooks/pre-push.log"
 # 清空之前的日誌內容
 > $log_file
 
-# 獲取即將推送的遠端分支名稱
-remote_branch=$(git rev-parse --abbrev-ref HEAD)
-
-# 記錄分支信息到日誌
-echo "Pushing to branch: $remote_branch" >> $log_file
-
-# 檢查當前提交是否為合併提交
-is_merge_commit=$(git log -1 --pretty=%P | wc -w)
-merge_parents=$(git log -1 --pretty=%P)
-
-echo "Merge commit check result: $is_merge_commit" >> $log_file
-echo "Parents of current commit: $merge_parents" >> $log_file
-
-if [ "$remote_branch" == "main" ]; then
-    echo "On main branch, proceeding with version check..." >> $log_file
-    if [ "$is_merge_commit" -eq 2 ]; then
-        # 這裡新增對合併提交的額外判斷
-        if git log -1 --pretty=%B | grep -q 'Merge branch'; then
-            echo "Merge commit detected from branch, skipping version increment." >> $log_file
-        else
-            echo "Non-branch merge commit, incrementing version number..." >> $log_file
-            increment_version
-        fi
-    else
-        echo "No merge commit detected, incrementing version number..." >> $log_file
-        increment_version
-    fi
-else
-    echo "Pushing to $remote_branch branch, no version increment." >> $log_file
-fi
-
+# 定義版本遞增函數
 increment_version() {
     # 同步本地與遠端的 main 分支
     git fetch origin main
@@ -64,3 +34,42 @@ increment_version() {
     git push origin main
     echo "Version updated to $new_version and pushed to remote main." >> $log_file
 }
+
+# 獲取即將推送的遠端分支名稱
+remote_branch=$(git rev-parse --abbrev-ref HEAD)
+
+# 記錄分支信息到日誌
+echo "Pushing to branch: $remote_branch" >> $log_file
+
+# 檢查當前提交是否為合併提交
+is_merge_commit=$(git log -1 --pretty=%P | wc -w)
+merge_parents=$(git log -1 --pretty=%P)
+
+echo "Merge commit check result: $is_merge_commit" >> $log_file
+echo "Parents of current commit: $merge_parents" >> $log_file
+
+# 僅當推送到 main 分支時才處理版本號遞增
+if [ "$remote_branch" == "main" ]; then
+    echo "On main branch, proceeding with version check..." >> $log_file
+
+    if [ "$is_merge_commit" -eq 2 ]; then
+        echo "Detected a merge commit. Checking if it should increment version..." >> $log_file
+
+        # 檢查合併提交的兩個父節點，是否一個在 main，另一個不在 main
+        parent1=$(echo $merge_parents | awk '{print $1}')
+        parent2=$(echo $merge_parents | awk '{print $2}')
+
+        # 確認這不是因為`rebase`或其他原因產生的合併提交
+        if git merge-base --is-ancestor $parent1 origin/main && git merge-base --is-ancestor $parent2 origin/main; then
+            echo "Merge commit detected from branch, skipping version increment." >> $log_file
+        else
+            echo "New merge commit detected, incrementing version number..." >> $log_file
+            increment_version
+        fi
+    else
+        echo "No merge commit detected, incrementing version number..." >> $log_file
+        increment_version
+    fi
+else
+    echo "Pushing to $remote_branch branch, no version increment." >> $log_file
+fi
