@@ -29,7 +29,8 @@ increment_version() {
         echo "Updated version to $new_version" >> $log_file
 
         git add $version_file
-        git commit -m "Bump version to $new_version" >> $log_file
+        git commit --amend --no-edit 
+		echo "Add version file into merge commit" > $log_file
 
         # 推送新版本號到遠端
         git push origin main
