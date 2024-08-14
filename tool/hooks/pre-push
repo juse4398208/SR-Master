@@ -2,7 +2,7 @@
 # .git/hooks/pre-push
 
 # 設定日誌文件路徑
-log_file="pre-push.log"
+log_file=".git/hooks/pre-push.log"
 
 # 定義版本遞增函數
 increment_version() {
@@ -18,20 +18,18 @@ increment_version() {
         # 版本號遞增邏輯
         version_file="version.txt"
         if [ ! -f $version_file ]; then
-            echo "version.txt not found!" >> $log_file
-            exit 1
+            echo "version.txt not found! Creating a new one with initial value 1." >> $log_file
+            echo "1" > $version_file
+        else
+            current_version=$(cat $version_file)
+            new_version=$((current_version + 1))
+            echo $new_version > $version_file
+            echo "Updated version to $new_version" >> $log_file
         fi
-        
-        current_version=$(cat $version_file)
-        new_version=$((current_version + 1))
-        echo $new_version > $version_file
-
-        echo "Updated version to $new_version" >> $log_file
 
         git add $version_file
-        git commit --amend --no-edit 
-		echo "Add version file into merge commit" > $log_file
-
+        git commit --amend --no-edit
+        echo "Added version file into merge commit" >> $log_file
     else
         echo "Local and remote commits are the same, skipping version increment." >> $log_file
     fi
@@ -69,7 +67,13 @@ if [ "$remote_branch" == "main" ]; then
             increment_version
         fi
     else
-        echo "No merge commit detected, skipping version increment." >> $log_file
+        commit_message=$(git log -1 --pretty=%B)
+        if echo "$commit_message" | grep -q 'Bump version to'; then
+            echo "Commit message contains 'Bump version to', skipping version increment." >> $log_file
+        else
+            echo "No merge commit detected, incrementing version number..." >> $log_file
+            increment_version
+        fi
     fi
 else
     echo "Pushing to $remote_branch branch, no version increment." >> $log_file
