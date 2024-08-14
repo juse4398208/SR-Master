@@ -30,6 +30,9 @@ increment_version() {
         git add $version_file
         git commit --amend --no-edit
         echo "Added version file into merge commit" >> $log_file
+        # 推送遞增後的版本號到遠端，並與遠端同步
+        git push --force-with-lease origin main
+		
     else
         echo "Local and remote commits are the same, skipping version increment." >> $log_file
     fi
