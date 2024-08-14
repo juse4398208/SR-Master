@@ -2,7 +2,7 @@
 # .git/hooks/pre-push
 
 # 設定日誌文件路徑
-log_file=".git/hooks/pre-push.log"
+log_file="pre-push.log"
 
 # 定義版本遞增函數
 increment_version() {
@@ -71,8 +71,7 @@ if [ "$remote_branch" == "main" ]; then
             increment_version
         fi
     else
-        echo "No merge commit detected, incrementing version number..." >> $log_file
-        increment_version
+        echo "No merge commit detected, skipping version increment." >> $log_file
     fi
 else
     echo "Pushing to $remote_branch branch, no version increment." >> $log_file
