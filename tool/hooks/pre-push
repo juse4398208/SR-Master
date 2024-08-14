@@ -32,9 +32,6 @@ increment_version() {
         git commit --amend --no-edit 
 		echo "Add version file into merge commit" > $log_file
 
-        # 推送新版本號到遠端
-        git push origin main
-        echo "Version updated to $new_version and pushed to remote main." >> $log_file
     else
         echo "Local and remote commits are the same, skipping version increment." >> $log_file
     fi
