@@ -3,6 +3,7 @@
 
 # 設定日誌文件路徑
 log_file=".git/hooks/pre-push.log"
+incremented_marker=".version-incremented"
 
 # 定義版本遞增函數
 increment_version() {
@@ -28,11 +29,17 @@ increment_version() {
         fi
 
         git add $version_file
-        git commit --amend --no-edit
-        echo "Added version file into merge commit" >> $log_file
-        # 推送遞增後的版本號到遠端，並與遠端同步
-        git push --force-with-lease origin main
-		
+
+        # 获取当前提交的消息
+        old_commit_message=$(git log -1 --pretty=%B)
+        new_commit_message="$old_commit_message Bump version to $new_version"
+
+        # 修改提交，保留原消息并添加版本递增信息
+        git commit --amend -m "$new_commit_message"
+        echo "Amended commit message to: $new_commit_message" >> $log_file
+
+        # 创建标记文件以指示版本已递增
+        touch $incremented_marker
     else
         echo "Local and remote commits are the same, skipping version increment." >> $log_file
     fi
@@ -77,6 +84,13 @@ if [ "$remote_branch" == "main" ]; then
             echo "No merge commit detected, incrementing version number..." >> $log_file
             increment_version
         fi
+    fi
+
+    # 如果版本号已经递增，则推送到远程
+    if [ -f $incremented_marker ]; then
+        git push --force-with-lease origin main
+        # 删除标记文件
+        rm $incremented_marker
     fi
 else
     echo "Pushing to $remote_branch branch, no version increment." >> $log_file
