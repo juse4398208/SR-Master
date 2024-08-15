@@ -7,6 +7,28 @@ log_file=".git/hooks/pre-push.log"
 # 標記檔案路徑
 MARKER_FILE=".skip_version_increment"
 
+# 最大重試次數
+MAX_RETRIES=3
+retry_count=0
+
+# 定義推送重試函數
+push_with_retries() {
+    while [ $retry_count -lt $MAX_RETRIES ]; do
+        if git push origin main; then
+            echo "Push succeeded after $retry_count retries." >> $log_file
+            return 0
+        else
+            retry_count=$((retry_count + 1))
+            echo "Push failed, retrying... ($retry_count/$MAX_RETRIES)" >> $log_file
+            echo "Pulling latest changes with merge..." >> $log_file
+            git pull origin main --no-rebase
+        fi
+    done
+
+    echo "Push failed after $MAX_RETRIES attempts." >> $log_file
+    exit 1
+}
+
 # 定義版本遞增函數
 increment_version() {
     # 獲取遠端和本地的 commit ID
@@ -42,13 +64,11 @@ increment_version() {
 		
         # 在推送之前建立標記檔案
         touch "$MARKER_FILE"
-		
-        # 推送到遠端之前，先執行 `git pull --rebase`
-        echo "Pulling latest changes with rebase..." >> $log_file
-        git pull --rebase origin main
+        
+        echo "Pulling latest changes with merge..." >> $log_file
+        git pull origin main --no-rebase
 
-        # 推送到遠端
-        git push origin main
+        push_with_retries
     else
         echo "Local and remote commits are the same, skipping version increment." >> $log_file
     fi
