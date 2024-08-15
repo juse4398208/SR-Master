@@ -3,7 +3,6 @@
 
 # 設定日誌文件路徑
 log_file=".git/hooks/pre-push.log"
-incremented_marker=".version-incremented"
 
 # 定義版本遞增函數
 increment_version() {
@@ -32,14 +31,11 @@ increment_version() {
 
         # 获取当前提交的消息
         old_commit_message=$(git log -1 --pretty=%B)
-        new_commit_message="$old_commit_message Bump version to $new_version"
+        new_commit_message="$old_commit_message Version: $current_version Bump version to $new_version"
 
         # 修改提交，保留原消息并添加版本递增信息
-        git commit --amend -m "$new_commit_message"
+        git commit --amend --no-edit -m "$new_commit_message"
         echo "Amended commit message to: $new_commit_message" >> $log_file
-
-        # 创建标记文件以指示版本已递增
-        touch $incremented_marker
     else
         echo "Local and remote commits are the same, skipping version increment." >> $log_file
     fi
@@ -73,8 +69,14 @@ if [ "$remote_branch" == "main" ]; then
         if git merge-base --is-ancestor $parent1 origin/main && git merge-base --is-ancestor $parent2 origin/main; then
             echo "Merge commit detected from branch, skipping version increment." >> $log_file
         else
-            echo "New merge commit detected, incrementing version number..." >> $log_file
-            increment_version
+            # 檢查提交信息中是否已經包含版本號信息
+            commit_message=$(git log -1 --pretty=%B)
+            if echo "$commit_message" | grep -q 'Bump version to'; then
+                echo "Commit message already contains version bump, skipping version increment." >> $log_file
+            else
+                echo "New merge commit detected, incrementing version number..." >> $log_file
+                increment_version
+            fi
         fi
     else
         commit_message=$(git log -1 --pretty=%B)
@@ -86,12 +88,8 @@ if [ "$remote_branch" == "main" ]; then
         fi
     fi
 
-    # 如果版本号已经递增，则推送到远程
-    if [ -f $incremented_marker ]; then
-        git push --force-with-lease origin main
-        # 删除标记文件
-        rm $incremented_marker
-    fi
+    # 推送到遠端
+    git push --force-with-lease origin main
 else
     echo "Pushing to $remote_branch branch, no version increment." >> $log_file
 fi
