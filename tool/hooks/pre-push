@@ -43,8 +43,12 @@ increment_version() {
         # 在推送之前建立標記檔案
         touch "$MARKER_FILE"
 		
+        # 推送到遠端之前，先執行 `git pull --rebase`
+        echo "Pulling latest changes with rebase..." >> $log_file
+        git pull --rebase origin main
+
         # 推送到遠端
-        git push --force-with-lease origin main
+        git push origin main
     else
         echo "Local and remote commits are the same, skipping version increment." >> $log_file
     fi
