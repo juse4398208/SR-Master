@@ -4,6 +4,9 @@
 # 設定日誌文件路徑
 log_file=".git/hooks/pre-push.log"
 
+# 標記檔案路徑
+MARKER_FILE=".skip_version_increment"
+
 # 定義版本遞增函數
 increment_version() {
     # 獲取遠端和本地的 commit ID
@@ -36,10 +39,23 @@ increment_version() {
         # 修改提交，保留原消息并添加版本递增信息
         git commit --amend --no-edit -m "$new_commit_message"
         echo "Amended commit message to: $new_commit_message" >> $log_file
+		
+        # 在推送之前建立標記檔案
+        touch "$MARKER_FILE"
+		
+        # 推送到遠端
+        git push --force-with-lease origin main
     else
         echo "Local and remote commits are the same, skipping version increment." >> $log_file
     fi
 }
+
+# 如果標記檔案存在，刪除並退出
+if [ -f "$MARKER_FILE" ]; then
+    rm -f "$MARKER_FILE"
+    echo "Detected marker file, skipping pre-push hook to prevent infinite loop."
+    exit 0
+fi
 
 # 獲取即將推送的遠端分支名稱
 remote_branch=$(git rev-parse --abbrev-ref HEAD)
@@ -88,8 +104,6 @@ if [ "$remote_branch" == "main" ]; then
         fi
     fi
 
-    # 推送到遠端
-    git push --force-with-lease origin main
 else
     echo "Pushing to $remote_branch branch, no version increment." >> $log_file
 fi
