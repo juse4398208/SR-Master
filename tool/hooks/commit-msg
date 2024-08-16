@@ -5,4 +5,4 @@ VERSION=$(cat version.txt)
 
 # 在提交消息中添加版本號
 COMMIT_MSG_FILE=$1
-echo "Version: $VERSION" >> $COMMIT_MSG_FILE
+echo "當前版本: $VERSION" >> $COMMIT_MSG_FILE
